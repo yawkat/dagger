@@ -34,6 +34,7 @@
   <modules>
     <module>compiler</module>
     <module>core</module>
+    <module>gwt</module>
     <!-- examples are handled in a default profile (see below) -->
     <module>producers</module>
   </modules>
