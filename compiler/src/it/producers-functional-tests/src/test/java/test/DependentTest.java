@@ -15,6 +15,8 @@
 */
 package test;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,17 +26,49 @@ import static com.google.common.truth.Truth.assertThat;
 
 @RunWith(JUnit4.class)
 public class DependentTest {
-  @Test public void testDependentComponent() throws Exception {
-    DependentComponent dependentComponent = Dagger_DependentComponent
+  @Test public void dependentComponent() throws Exception {
+    DependentComponent dependentComponent = DaggerDependentComponent
         .builder()
-        .dependedProductionComponent(Dagger_DependedProductionComponent.builder()
+        .dependedProductionComponent(DaggerDependedProductionComponent.builder()
             .executor(MoreExecutors.directExecutor())
             .build())
-        .dependedComponent(Dagger_DependedComponent.create())
+        .dependedComponent(DaggerDependedComponent.create())
         .executor(MoreExecutors.directExecutor())
         .build();
     assertThat(dependentComponent).isNotNull();
     assertThat(dependentComponent.greetings().get()).containsExactly(
         "2", "Hello world!", "HELLO WORLD!");
+  }
+
+  @Test public void reuseBuilderWithDependentComponent() throws Exception {
+    DaggerDependentComponent.Builder dependentComponentBuilder = DaggerDependentComponent
+        .builder()
+        .executor(MoreExecutors.directExecutor());
+
+    DependentComponent componentUsingComponents = dependentComponentBuilder
+        .dependedProductionComponent(DaggerDependedProductionComponent.builder()
+            .executor(MoreExecutors.directExecutor())
+            .build())
+        .dependedComponent(DaggerDependedComponent.create())
+        .build();
+
+    DependentComponent componentUsingJavaImpls = dependentComponentBuilder
+        .dependedProductionComponent(new DependedProductionComponent() {
+          @Override public ListenableFuture<Integer> numGreetings() {
+            return Futures.immediateFuture(3);
+          }
+        })
+        .dependedComponent(new DependedComponent() {
+          @Override public String getGreeting() {
+            return "Goodbye world!";
+          }
+        })
+        .build();
+
+    assertThat(componentUsingJavaImpls.greetings().get()).containsExactly(
+        "3", "Goodbye world!", "GOODBYE WORLD!");
+    assertThat(componentUsingComponents.greetings().get()).containsExactly(
+        "2", "Hello world!", "HELLO WORLD!");
+
   }
 }

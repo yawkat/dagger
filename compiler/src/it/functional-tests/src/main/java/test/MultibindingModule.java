@@ -17,16 +17,45 @@ package test;
 
 import dagger.Module;
 import dagger.Provides;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import javax.inject.Provider;
 
 import static dagger.Provides.Type.MAP;
+import static dagger.Provides.Type.SET;
 
 @Module
 class MultibindingModule {
-  @Provides(type = MAP) @TestKey("foo") String provideFooKey() {
+  @Provides(type = MAP) @TestKey("foo") String provideFooKey(double doubleDependency) {
     return "foo value";
   }
 
   @Provides(type = MAP) @TestKey("bar") String provideBarKey() {
     return "bar value";
+  }
+
+  @Provides(type = SET) int provideFiveToSet() {
+    return 5;
+  }
+
+  @Provides(type = SET) int provideSixToSet() {
+    return 6;
+  }
+
+  @Provides Set<String> provideMapKeys(Map<String, Provider<String>> map) {
+    return map.keySet();
+  }
+
+  @Provides Collection<String> provideMapValues(Map<String, String> map) {
+    return map.values();
+  }
+
+  @Provides(type = MAP) @TestKey.NestedWrappedKey(Integer.class) String valueForInteger() {
+    return "integer";
+  }
+
+  @Provides(type = MAP) @TestKey.NestedWrappedKey(Long.class) String valueForLong() {
+    return "long";
   }
 }

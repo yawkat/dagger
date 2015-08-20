@@ -40,12 +40,13 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_MAP_HAS_MAP_KEY;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_PRIVATE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RAW_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_STATIC;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_MULTIPLE_MAP_KEY;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_KEY;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PROVIDES_METHOD_SET_VALUES_RETURN_SET;
+import static dagger.internal.codegen.ErrorMessages.PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS;
+import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -94,10 +95,6 @@ final class ProvidesMethodValidator implements Validator<ExecutableElement> {
       builder.addItem(formatErrorMessage(BINDING_METHOD_PRIVATE),
           providesMethodElement);
     }
-    if (modifiers.contains(STATIC)) {
-      // TODO(gak): why not?
-      builder.addItem(formatErrorMessage(BINDING_METHOD_STATIC), providesMethodElement);
-    }
     if (modifiers.contains(ABSTRACT)) {
       builder.addItem(formatErrorMessage(BINDING_METHOD_ABSTRACT), providesMethodElement);
     }
@@ -116,6 +113,8 @@ final class ProvidesMethodValidator implements Validator<ExecutableElement> {
       builder.addItem(formatErrorMessage(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY),
           providesMethodElement);
     }
+
+    validateMethodQualifiers(builder, providesMethodElement);
 
     switch (providesAnnotation.type()) {
       case UNIQUE: // fall through
@@ -161,6 +160,17 @@ final class ProvidesMethodValidator implements Validator<ExecutableElement> {
     }
 
     return builder.build();
+  }
+
+  /** Validates that a Provides or Produces method doesn't have multiple qualifiers. */
+  static void validateMethodQualifiers(ValidationReport.Builder<ExecutableElement> builder,
+      ExecutableElement methodElement) {
+    ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(methodElement);
+    if (qualifiers.size() > 1) {
+      for (AnnotationMirror qualifier : qualifiers) {
+        builder.addItem(PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS, methodElement, qualifier);
+      }
+    }
   }
 
   private String formatErrorMessage(String msg) {

@@ -16,15 +16,16 @@
 package test.subcomponent;
 
 import dagger.Component;
-import java.util.Set;
 import javax.inject.Singleton;
 
 @Component(modules = ParentModule.class)
 @Singleton
-interface ParentComponent {
-  SingletonType getSingletonType();
-
-  Set<Object> objectSet();
-
+interface ParentComponent extends ParentGetters {
   ChildComponent newChildComponent();
+
+  ChildAbstractClassComponent newChildAbstractClassComponent();
+
+  ChildComponentRequiringModules newChildComponentRequiringModules(
+      ChildModuleWithParameters cmwp,
+      ChildModuleWithState childModuleWithState);
 }

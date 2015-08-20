@@ -15,7 +15,6 @@
  */
 package dagger.internal;
 
-import dagger.Factory;
 import javax.inject.Provider;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -59,8 +58,8 @@ public class ScopedProviderTest {
         return i++;
       }
     });
-    assert_().that(scopedProvider.get()).is(0);
-    assert_().that(scopedProvider.get()).is(0);
-    assert_().that(scopedProvider.get()).is(0);
+    assert_().that(scopedProvider.get()).isEqualTo(0);
+    assert_().that(scopedProvider.get()).isEqualTo(0);
+    assert_().that(scopedProvider.get()).isEqualTo(0);
   }
 }

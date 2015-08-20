@@ -23,11 +23,10 @@ import com.google.common.base.Equivalence;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import dagger.Component;
 import dagger.Provides;
-import dagger.Subcomponent;
-import dagger.producers.ProductionComponent;
+import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -47,11 +46,13 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.InjectionAnnotations.getScopeAnnotation;
 import static dagger.internal.codegen.ProvisionBinding.Kind.INJECTION;
+import static dagger.internal.codegen.ProvisionBinding.Kind.PROVISION;
 import static dagger.internal.codegen.Util.unwrapOptionalEquivalence;
 import static dagger.internal.codegen.Util.wrapOptionalInEquivalence;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.FIELD;
 import static javax.lang.model.element.ElementKind.METHOD;
+import static javax.lang.model.element.Modifier.STATIC;
 
 /**
  * A value object representing the mechanism by which a {@link Key} can be provided. New instances
@@ -63,11 +64,14 @@ import static javax.lang.model.element.ElementKind.METHOD;
 @AutoValue
 abstract class ProvisionBinding extends ContributionBinding {
   @Override
-  ImmutableSet<DependencyRequest> implicitDependencies() {
-    return new ImmutableSet.Builder<DependencyRequest>()
-        .addAll(dependencies())
-        .addAll(memberInjectionRequest().asSet())
-        .build();
+  Set<DependencyRequest> implicitDependencies() {
+    // Optimization: If we don't need the memberInjectionRequest, don't create more objects.
+    if (!memberInjectionRequest().isPresent()) {
+      return dependencies();
+    } else {
+      // Optimization: Avoid creating an ImmutableSet+Builder just to union two things together.
+      return Sets.union(memberInjectionRequest().asSet(), dependencies());
+    }
   }
 
   enum Kind {
@@ -125,16 +129,31 @@ abstract class ProvisionBinding extends ContributionBinding {
     }
   }
 
+  @Override
+  boolean isSyntheticBinding() {
+    return bindingKind().equals(Kind.SYNTHETIC_PROVISON);
+  }
+
+  @Override
+  Class<?> frameworkClass() {
+    return Provider.class;
+  }
+
   enum FactoryCreationStrategy {
     ENUM_INSTANCE,
     CLASS_CONSTRUCTOR,
   }
 
   FactoryCreationStrategy factoryCreationStrategy() {
-    return (bindingKind().equals(INJECTION)
-          && implicitDependencies().isEmpty())
-          ? FactoryCreationStrategy.ENUM_INSTANCE
-          : FactoryCreationStrategy.CLASS_CONSTRUCTOR;
+    if (bindingKind().equals(INJECTION) && implicitDependencies().isEmpty()) {
+      return FactoryCreationStrategy.ENUM_INSTANCE;
+    }
+    if (bindingKind().equals(PROVISION)
+        && implicitDependencies().isEmpty()
+        && bindingElement().getModifiers().contains(STATIC)) {
+      return FactoryCreationStrategy.ENUM_INSTANCE;
+    }
+    return FactoryCreationStrategy.CLASS_CONSTRUCTOR;
   }
 
   static final class Factory {
@@ -194,7 +213,7 @@ abstract class ProvisionBinding extends ContributionBinding {
           membersInjectionRequest(enclosingCxtorType);
       Optional<AnnotationMirror> scope =
           getScopeAnnotation(constructorElement.getEnclosingElement());
-      
+
       TypeElement bindingTypeElement =
           MoreElements.asType(constructorElement.getEnclosingElement());
 

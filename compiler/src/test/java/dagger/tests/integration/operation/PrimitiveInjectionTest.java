@@ -30,7 +30,7 @@ import static java.util.Arrays.asList;
 @RunWith(JUnit4.class)
 public final class PrimitiveInjectionTest {
 
-  // TODO(user): Use @test.ForTest to qualify primitives once qualifier equivalence is working.
+  // TODO(cgruber): Use @test.ForTest to qualify primitives once qualifier equivalence is working.
   /*
   JavaFileObject annotation = JavaFileObjects.forSourceLines("test.ForTest",
       "package test;",
@@ -40,7 +40,7 @@ public final class PrimitiveInjectionTest {
       "}");
   */
 
-  // TODO(user): Expand test to support more primitive types when b/15512877 is fixed.
+  // TODO(cgruber): Expand test to support more primitive types when b/15512877 is fixed.
   JavaFileObject primitiveInjectable = JavaFileObjects.forSourceLines("test.PrimitiveInjectable",
       "package test;",
       "import javax.inject.Inject;",
@@ -68,22 +68,20 @@ public final class PrimitiveInjectionTest {
       "}");
 
   JavaFileObject expectedComponent = JavaFileObjects.forSourceLines(
-      "test.Dagger_PrimitiveComponent",
+      "test.DaggerPrimitiveComponent",
       "package test;",
       "",
       "import javax.annotation.Generated;",
       "import javax.inject.Provider;",
       "",
       "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-      "public final class Dagger_PrimitiveComponent implements PrimitiveComponent {",
-      "  private final PrimitiveModule primitiveModule;",
+      "public final class DaggerPrimitiveComponent implements PrimitiveComponent {",
       "  private Provider<Integer> primitiveIntProvider;",
       "  private Provider<PrimitiveInjectable> primitiveInjectableProvider;",
       "",
-      "  private Dagger_PrimitiveComponent(Builder builder) {",
+      "  private DaggerPrimitiveComponent(Builder builder) {",
       "    assert builder != null;",
-      "    this.primitiveModule = builder.primitiveModule;",
-      "    initialize();",
+      "    initialize(builder);",
       "  }",
       "",
       "  public static Builder builder() {",
@@ -94,11 +92,11 @@ public final class PrimitiveInjectionTest {
       "    return builder().build();",
       "  }",
       "",
-      "  private void initialize() {",
+      "  private void initialize(final Builder builder) {",
       "    this.primitiveIntProvider =",
-      "        PrimitiveModule$$PrimitiveIntFactory.create(primitiveModule);",
+      "        PrimitiveModule_PrimitiveIntFactory.create(builder.primitiveModule);",
       "    this.primitiveInjectableProvider =",
-      "        PrimitiveInjectable$$Factory.create(primitiveIntProvider);",
+      "        PrimitiveInjectable_Factory.create(primitiveIntProvider);",
       "  }",
       "",
       "  @Override",
@@ -121,7 +119,7 @@ public final class PrimitiveInjectionTest {
       "      if (primitiveModule == null) {",
       "        this.primitiveModule = new PrimitiveModule();",
       "      }",
-      "      return new Dagger_PrimitiveComponent(this);",
+      "      return new DaggerPrimitiveComponent(this);",
       "    }",
       "",
       "    public Builder primitiveModule(PrimitiveModule primitiveModule) {",

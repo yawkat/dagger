@@ -30,12 +30,12 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_MUST_RETURN_A
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_PRIVATE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RAW_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_STATIC;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_SAME_NAME;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RAW_FUTURE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
+import static dagger.internal.codegen.ErrorMessages.PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS;
 
 @RunWith(JUnit4.class)
 public class ProducerModuleFactoryGeneratorTest {
@@ -98,25 +98,6 @@ public class ProducerModuleFactoryGeneratorTest {
         .processedWith(new ComponentProcessor())
         .failsToCompile()
         .withErrorContaining(formatErrorMessage(BINDING_METHOD_PRIVATE));
-  }
-
-  @Test public void producesMethodStatic() {
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
-        "package test;",
-        "",
-        "import dagger.producers.ProducerModule;",
-        "import dagger.producers.Produces;",
-        "",
-        "@ProducerModule",
-        "final class TestModule {",
-        "  @Produces static String produceString() {",
-        "    return \"\";",
-        "  }",
-        "}");
-    assertAbout(javaSource()).that(moduleFile)
-        .processedWith(new ComponentProcessor())
-        .failsToCompile()
-        .withErrorContaining(formatErrorMessage(BINDING_METHOD_STATIC));
   }
 
   @Test public void producesMethodReturnVoid() {
@@ -459,7 +440,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.Futures;",
@@ -471,11 +452,11 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "",
-        "  public TestModule$$ProduceStringFactory(TestModule module, Executor executor) {",
+        "  public TestModule_ProduceStringFactory(TestModule module, Executor executor) {",
         "    assert module != null;",
         "    this.module = module;",
         "    assert executor != null;",
@@ -513,7 +494,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.Futures;",
@@ -526,12 +507,12 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory",
+        "public final class TestModule_ProduceStringFactory",
         "    extends AbstractProducer<Set<String>> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "",
-        "  public TestModule$$ProduceStringFactory(TestModule module, Executor executor) {  ",
+        "  public TestModule_ProduceStringFactory(TestModule module, Executor executor) {  ",
         "    assert module != null;",
         "    this.module = module;",
         "    assert executor != null;",
@@ -568,7 +549,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return \"\";",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.ListenableFuture;",
@@ -579,11 +560,11 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "",
-        "  public TestModule$$ProduceStringFactory(TestModule module, Executor executor) {",
+        "  public TestModule_ProduceStringFactory(TestModule module, Executor executor) {",
         "    assert module != null;",
         "    this.module = module;",
         "    assert executor != null;",
@@ -620,7 +601,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return \"\";",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.collect.ImmutableSet;",
@@ -633,12 +614,12 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory",
+        "public final class TestModule_ProduceStringFactory",
         "    extends AbstractProducer<Set<String>> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "",
-        "  public TestModule$$ProduceStringFactory(TestModule module, Executor executor) {  ",
+        "  public TestModule_ProduceStringFactory(TestModule module, Executor executor) {  ",
         "    assert module != null;",
         "    this.module = module;",
         "    assert executor != null;",
@@ -680,7 +661,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.AsyncFunction;",
@@ -696,7 +677,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.inject.Provider;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "  private final Producer<Integer> aProducer;",
@@ -704,7 +685,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "  private final Producer<Object> cProducer;",
         "  private final Provider<Boolean> dProvider;",
         "",
-        "  public TestModule$$ProduceStringFactory(",
+        "  public TestModule_ProduceStringFactory(",
         "      TestModule module,",
         "      Executor executor,",
         "      Producer<Integer> aProducer,",
@@ -766,7 +747,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return \"\";",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.AsyncFunction;",
@@ -782,7 +763,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.inject.Provider;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "  private final Producer<Integer> aProducer;",
@@ -790,7 +771,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "  private final Producer<Object> cProducer;",
         "  private final Provider<Boolean> dProvider;",
         "",
-        "  public TestModule$$ProduceStringFactory(",
+        "  public TestModule_ProduceStringFactory(",
         "      TestModule module,",
         "      Executor executor,",
         "      Producer<Integer> aProducer,",
@@ -849,7 +830,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.AsyncFunction;",
@@ -861,12 +842,12 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "  private final Producer<Integer> aProducer;",
         "",
-        "  public TestModule$$ProduceStringFactory(",
+        "  public TestModule_ProduceStringFactory(",
         "      TestModule module,",
         "      Executor executor,",
         "      Producer<Integer> aProducer) {",
@@ -910,7 +891,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.Futures;",
@@ -923,11 +904,11 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "",
-        "  public TestModule$$ProduceStringFactory(TestModule module, Executor executor) {",
+        "  public TestModule_ProduceStringFactory(TestModule module, Executor executor) {",
         "    assert module != null;",
         "    this.module = module;",
         "    assert executor != null;",
@@ -965,7 +946,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return \"\";",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.ListenableFuture;",
@@ -977,11 +958,11 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "",
-        "  public TestModule$$ProduceStringFactory(TestModule module, Executor executor) {",
+        "  public TestModule_ProduceStringFactory(TestModule module, Executor executor) {",
         "    assert module != null;",
         "    this.module = module;",
         "    assert executor != null;",
@@ -1024,7 +1005,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.AsyncFunction;",
@@ -1041,7 +1022,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.inject.Provider;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory extends AbstractProducer<String> {",
+        "public final class TestModule_ProduceStringFactory extends AbstractProducer<String> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "  private final Producer<Integer> aProducer;",
@@ -1049,7 +1030,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "  private final Producer<Object> cProducer;",
         "  private final Provider<Boolean> dProvider;",
         "",
-        "  public TestModule$$ProduceStringFactory(",
+        "  public TestModule_ProduceStringFactory(",
         "      TestModule module,",
         "      Executor executor,",
         "      Producer<Integer> aProducer,",
@@ -1111,7 +1092,7 @@ public class ProducerModuleFactoryGeneratorTest {
         "    return null;",
         "  }",
         "}");
-    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule$$ProduceStringFactory",
+    JavaFileObject factoryFile = JavaFileObjects.forSourceLines("TestModule_ProduceStringFactory",
         "package test;",
         "",
         "import com.google.common.util.concurrent.Futures;",
@@ -1125,12 +1106,12 @@ public class ProducerModuleFactoryGeneratorTest {
         "import javax.annotation.Generated;",
         "",
         "@Generated(\"dagger.internal.codegen.ComponentProcessor\")",
-        "public final class TestModule$$ProduceStringFactory",
+        "public final class TestModule_ProduceStringFactory",
         "    extends AbstractProducer<Set<String>> {",
         "  private final TestModule module;",
         "  private final Executor executor;",
         "",
-        "  public TestModule$$ProduceStringFactory(TestModule module, Executor executor) {  ",
+        "  public TestModule_ProduceStringFactory(TestModule module, Executor executor) {  ",
         "    assert module != null;",
         "    this.module = module;",
         "    assert executor != null;",
@@ -1154,4 +1135,37 @@ public class ProducerModuleFactoryGeneratorTest {
         .and().generatesSources(factoryFile);
   }
 
+  private static final JavaFileObject QUALIFIER_A =
+      JavaFileObjects.forSourceLines("test.QualifierA",
+          "package test;",
+          "",
+          "import javax.inject.Qualifier;",
+          "",
+          "@Qualifier @interface QualifierA {}");
+  private static final JavaFileObject QUALIFIER_B =
+      JavaFileObjects.forSourceLines("test.QualifierB",
+          "package test;",
+          "",
+          "import javax.inject.Qualifier;",
+          "",
+          "@Qualifier @interface QualifierB {}");
+
+  @Test public void producesMethodMultipleQualifiers() {
+    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+        "package test;",
+        "",
+        "import dagger.producers.ProducerModule;",
+        "import dagger.producers.Produces;",
+        "",
+        "@ProducerModule",
+        "final class TestModule {",
+        "  @Produces @QualifierA @QualifierB abstract String produceString() {",
+        "    return \"\";",
+        "  }",
+        "}");
+    assertAbout(javaSources()).that(ImmutableList.of(moduleFile, QUALIFIER_A, QUALIFIER_B))
+        .processedWith(new ComponentProcessor())
+        .failsToCompile()
+        .withErrorContaining(PROVIDES_OR_PRODUCES_METHOD_MULTIPLE_QUALIFIERS);
+  }
 }

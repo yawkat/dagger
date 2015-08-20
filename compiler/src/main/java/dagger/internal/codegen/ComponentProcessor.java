@@ -15,10 +15,6 @@
  */
 package dagger.internal.codegen;
 
-import java.util.EnumSet;
-
-import javax.tools.Diagnostic;
-import java.util.Arrays;
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
@@ -27,6 +23,7 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Filer;
@@ -36,6 +33,8 @@ import javax.annotation.processing.Processor;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
+
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 /**
@@ -50,6 +49,8 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 @AutoService(Processor.class)
 public final class ComponentProcessor extends BasicAnnotationProcessor {
   private InjectBindingRegistry injectBindingRegistry;
+  private FactoryGenerator factoryGenerator;
+  private MembersInjectorGenerator membersInjectorGenerator;
 
   @Override
   public SourceVersion getSupportedSourceVersion() {
@@ -85,7 +86,14 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
     ModuleValidator moduleValidator = new ModuleValidator(types, elements, methodSignatureFormatter,
         Module.class, Provides.class);
     ProvidesMethodValidator providesMethodValidator = new ProvidesMethodValidator(elements);
-    ComponentValidator componentValidator = new ComponentValidator(moduleValidator);
+    BuilderValidator componentBuilderValidator =
+        new BuilderValidator(elements, types, ComponentDescriptor.Kind.COMPONENT);
+    BuilderValidator subcomponentBuilderValidator =
+        new BuilderValidator(elements, types, ComponentDescriptor.Kind.SUBCOMPONENT);
+    ComponentValidator subcomponentValidator = ComponentValidator.createForSubcomponent(elements,
+        types, moduleValidator, subcomponentBuilderValidator);
+    ComponentValidator componentValidator = ComponentValidator.createForComponent(elements, types,
+        moduleValidator, subcomponentValidator, subcomponentBuilderValidator);
     MapKeyValidator mapKeyValidator = new MapKeyValidator();
     ModuleValidator producerModuleValidator = new ModuleValidator(types, elements,
         methodSignatureFormatter, ProducerModule.class, Produces.class);
@@ -94,11 +102,12 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
 
     Key.Factory keyFactory = new Key.Factory(types, elements);
 
-    FactoryGenerator factoryGenerator =
+    this.factoryGenerator =
         new FactoryGenerator(filer, DependencyRequestMapper.FOR_PROVIDER, nullableDiagnosticType);
-    MembersInjectorGenerator membersInjectorGenerator =
+    this.membersInjectorGenerator =
         new MembersInjectorGenerator(filer, elements, types, DependencyRequestMapper.FOR_PROVIDER);
-    ComponentGenerator componentGenerator = new ComponentGenerator(filer, nullableDiagnosticType);
+    ComponentGenerator componentGenerator =
+        new ComponentGenerator(filer, types, nullableDiagnosticType);
     ProducerFactoryGenerator producerFactoryGenerator =
         new ProducerFactoryGenerator(filer, DependencyRequestMapper.FOR_PRODUCER);
 
@@ -112,11 +121,10 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new MembersInjectionBinding.Factory(elements, types, keyFactory, dependencyRequestFactory);
 
     this.injectBindingRegistry = new InjectBindingRegistry(
-        elements, types, messager, provisionBindingFactory, factoryGenerator,
-        membersInjectionBindingFactory, membersInjectorGenerator);
+        elements, types, messager, provisionBindingFactory, membersInjectionBindingFactory);
 
     ComponentDescriptor.Factory componentDescriptorFactory =
-        new ComponentDescriptor.Factory(elements);
+        new ComponentDescriptor.Factory(elements, types, dependencyRequestFactory);
 
     BindingGraph.Factory bindingGraphFactory = new BindingGraph.Factory(
         elements, types, injectBindingRegistry, keyFactory,
@@ -156,6 +164,9 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
         new ComponentProcessingStep(
             messager,
             componentValidator,
+            subcomponentValidator,
+            componentBuilderValidator,
+            subcomponentBuilderValidator,
             bindingGraphValidator,
             componentDescriptorFactory,
             bindingGraphFactory,
@@ -178,7 +189,8 @@ public final class ComponentProcessor extends BasicAnnotationProcessor {
   @Override
   protected void postProcess() {
     try {
-      injectBindingRegistry.generateSourcesForRequiredBindings();
+      injectBindingRegistry.generateSourcesForRequiredBindings(
+          factoryGenerator, membersInjectorGenerator);
     } catch (SourceFileGenerationException e) {
       e.printMessageTo(processingEnv.getMessager());
     }

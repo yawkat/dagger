@@ -22,7 +22,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.dagger</groupId>
     <artifactId>dagger-parent</artifactId>
-    <version>2.0-SNAPSHOT</version>
+    <version>2.1-SNAPSHOT</version>
   </parent>
   <groupId>dagger.tests</groupId>
   <artifactId>functional-tests</artifactId>
@@ -37,6 +37,13 @@ limitations under the License.
       <groupId>com.google.dagger</groupId>
       <artifactId>dagger-compiler</artifactId>
       <version>${project.version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <!-- For map-bindings -->
+      <groupId>com.google.auto.value</groupId>
+      <artifactId>auto-value</artifactId>
+      <version>${auto.value.version}</version>
       <optional>true</optional>
     </dependency>
 
@@ -59,9 +66,6 @@ limitations under the License.
         <configuration>
           <source>1.7</source>
           <target>1.7</target>
-          <annotationProcessors>
-            <annotationProcessor>dagger.internal.codegen.ComponentProcessor</annotationProcessor>
-          </annotationProcessors>
         </configuration>
       </plugin>
       <plugin>

@@ -42,7 +42,6 @@ import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_IN_MODULE
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_NOT_MAP_HAS_MAP_KEY;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_PRIVATE;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_SET_VALUES_RAW_SET;
-import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_STATIC;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_TYPE_PARAMETER;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_MULTIPLE_MAP_KEY;
 import static dagger.internal.codegen.ErrorMessages.BINDING_METHOD_WITH_NO_MAP_KEY;
@@ -51,7 +50,6 @@ import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_RETURN_TYPE;
 import static dagger.internal.codegen.ErrorMessages.PRODUCES_METHOD_SET_VALUES_RETURN_SET;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.ARRAY;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -97,10 +95,6 @@ final class ProducesMethodValidator implements Validator<ExecutableElement> {
     if (modifiers.contains(PRIVATE)) {
       builder.addItem(formatErrorMessage(BINDING_METHOD_PRIVATE), producesMethodElement);
     }
-    if (modifiers.contains(STATIC)) {
-      // TODO(gak): why not?
-      builder.addItem(formatErrorMessage(BINDING_METHOD_STATIC), producesMethodElement);
-    }
     if (modifiers.contains(ABSTRACT)) {
       builder.addItem(formatErrorMessage(BINDING_METHOD_ABSTRACT), producesMethodElement);
     }
@@ -119,6 +113,8 @@ final class ProducesMethodValidator implements Validator<ExecutableElement> {
       builder.addItem(formatErrorMessage(BINDING_METHOD_NOT_MAP_HAS_MAP_KEY),
           producesMethodElement);
     }
+
+    ProvidesMethodValidator.validateMethodQualifiers(builder, producesMethodElement);
 
     switch (producesAnnotation.type()) {
       case UNIQUE: // fall through
